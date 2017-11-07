@@ -72,18 +72,32 @@ function result (p1Choice, p2Choice) {
 var choices = ['rock','paper','scissors'];
 
 var p1 = {
+	data: {
+		name: '',
+		wins: 0,
+		losses: 0
+	}
 	choice: '',
-	wins: 0,
-	losses: 0,
 	turn: false
 };
 
 var p2 = {
+	data: {
+		name: '',
+		wins: 0,
+		losses: 0
+	}
 	choice: '',
-	wins: 0,
-	losses: 0,
 	turn: false
 };
+
+// data stored in firebase: player names, wins, losses.
+
+// listens for changes in values in firebase db
+firebase.database().ref().on('value', function (snapshot) {
+
+})
+
 
 // appear as buttons when it is the user's turn
 function renderButtons () {
@@ -100,6 +114,7 @@ function renderButtons () {
 }
 
 // when two players are present, start the game -- player1's turn
+var players = [];
 
 // determining player turns -- turn prop?
 	// hide/show buttons depending on who's turn it is
