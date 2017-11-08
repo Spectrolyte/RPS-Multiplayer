@@ -17,25 +17,41 @@
 	  <h1>Rock, Paper, Scissors Multiplayer</h1>
 	</div>
 	<div class="container">
-		<!-- game content -->
 		<!-- insert input/submission form here; hide when player inputs their name -->
+		<div class="rules-and-form row">
+			<p>Game description here</p>
+			<form id="username-form">
+			  <div class="form-group">
+			    <label for="username-input">Display Name</label>
+			    <input class="form-control" id="username" placeholder="This is the name shown to your opponent">
+			  </div>
+			  <button type="submit" class="btn btn-default" id="submit-btn">Submit</button>
+			</form>
+		</div>
+
+		<!-- ready up buttons -->
 		<div class="row">
+			<button class="btn btn-default">Ready</button>
+		</div>
+
+		<!-- game content -->
+		<div class="game-content row">
 			<span id="test"></span>
 			<!-- player1 stats -->
-			<section class="player col-md-4">
-				Player 1:
+			<section class="player col-md-4" id="player1">
+				Player 1: <span id="p1-name"></span>
 			</section>
 			<!-- game stats -->
 			<section class="result col-md-4">
 				Result: <span id="round-result"></span>
 			</section>
 			<!-- player2 stats -->
-			<section class="player col-md-4">
-				Player 2:
+			<section class="player col-md-4" id="player2">
+				Player 2: <span id="p2-name"></span>
 			</section>
 		</div>
 		<!-- chat box -->
-		<div class="row">
+		<div class="game-content row">
 			Chat Box:
 		</div>
 	</div>
