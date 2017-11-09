@@ -12,10 +12,32 @@ firebase.initializeApp(config);
 
 var database = firebase.database();
 
+var player1Ref = database.ref('/player1');
+var player2Ref = database.ref('/player2');
+
+var initialName = 'No One';
+var initialWins = 0;
+var initialLosses = 0;
+
+player1Ref.set({
+	name: initialName,
+	wins: initialWins,
+	losses: initialLosses
+})
+
+player2Ref.set({
+	name: initialName,
+	wins: initialWins,
+	losses: initialLosses
+})
+
+
 $(document).ready(function () {
 
 // player choices: rock, paper, scissors
 var choices = ['rock','paper','scissors'];
+
+var numPlayers = 0;
 
 var p1 = {
 	data: {
@@ -96,45 +118,68 @@ function result (p1Choice, p2Choice) {
 $('.game-content').hide();
 
 // upon submission:
-	// check how many people are connected
-		// if more than 2, prevent player from joining the room
 	// if user is new, create new child node in firebase
 	// else if user is returning, load their previous stats
 $('#submit-btn').click(function (event) {
 	// prevents page refresh/form submission
 	event.preventDefault();
 
-	var username = $('#username').val();
+	if (!p1.data.name && !p2.data.name) {
+		p1.data.name = $('#username').val();
+		$('#p1-name').text(p1.data.name);
+		$('#p1-gamephase').text('Waiting for player 2...');
+		$('#player1').show();
 
-	if (!p1.data.name) {
-		p1.data.name = username;
-		$('.game-content').show();
-
-		userStatsRef.push({
+		player1Ref.set({
 			name: p1.data.name,
 			wins: p1.data.wins,
 			losses: p1.data.losses
-		});
+		})
 
-	}
-	else if (!p2.data.name) {
-		p2.data.name = username;
-		$('.game-content').show();
-
-		userStatsRef.push({
+		/*userStatsRef.push({
 			name: p1.data.name,
 			wins: p1.data.wins,
 			losses: p1.data.losses
-		});
+		});*/
+
 	}
-	else {
-		alert('Sorry, there\'s no more room!');
+
+	else if (p1.data.name && !p2.data.name) {
+		p2.data.name = $('#username').val();
+		$('#p2-name').text(p2.data.name);
+		$('#player2').show();
+
+		player2Ref.set({
+			name: p1.data.name,
+			wins: p1.data.wins,
+			losses: p1.data.losses
+		})
+		
+		/*userStatsRef.push({
+			name: p2.data.name,
+			wins: p2.data.wins,
+			losses: p2.data.losses
+		});*/
 	}
+	
+	startGame();
+})
+
+player1Ref.on('value', function (snapshot) {
+	p1.data.name = snapshot.val().name;
+	p1.data.wins = snapshot.val().wins;
+	p1.data.losses = snapshot.val().losses;
+})
+
+player2Ref.on('value', function (snapshot) {
+	p2.data.name = snapshot.val().name;
+	p2.data.wins = snapshot.val().wins;
+	p2.data.losses = snapshot.val().losses;
 })
 
 
-// appear as buttons when it is the user's turn
-function renderButtons () {
+// attach buttons to player divs and hide
+function renderButtons (player) {
 	var btnDiv = $('<div>');
 
 	for (var i=0; i< choices.length; i++) {
@@ -144,17 +189,20 @@ function renderButtons () {
 	}
 	
 	// hide on initial page load
-	$('.player').append(btnDiv).hide();
+	$(player).append(btnDiv);
 }
 
-// determining player turns -- turn prop?
-	// hide/show buttons depending on who's turn it is
-// check if players are ready, then start game
+// game start -- run when two players are present/names exist
 function startGame () {
-	if (p1.ready && p2.ready) {
-		// display buttons to player one
-		$('#player1').show();
+	// start with player1
+	var playersPresent = p1.data.name && p2.data.name;
+
+	if (playersPresent && !p1.turn) {
+		p1.turn = true;
+		renderButtons('#player1');
+		$('#p2-gamephase').text('Your opponent is choosing...')
 	}
+
 }
 
 // upon rps-choice button click
@@ -168,6 +216,7 @@ $('.rps-choices').click(function () {
 
 // --------------FIREBASE--------------
 // data stored in firebase: player names, wins, losses.
+
 var userStatsRef = database.ref('/userStats');
 // listens for changes in values in firebase db
 userStatsRef.on('value', function (snapshot) {
@@ -176,9 +225,19 @@ userStatsRef.on('value', function (snapshot) {
 
 // when two players are present, start the game -- player1's turn
 var connectionsRef = database.ref("/connections");
-// spectators
-// var connectionsRef = database.ref("/connections/spectators");
 var connectedRef = database.ref(".info/connected");
+
+connectionsRef.on("value", function(snapshot) {
+	if (snapshot.numChildren() > 2) {
+		/*window.location.replace('../../redirect.html');*/
+		$('.rules-and-form').hide();
+	}
+});
+
+// whenever someone enters the room
+connectionsRef.on('child_added', function (childSnapshot, prevChildKey) {
+	
+})
 
 connectedRef.on("value", function(snapshot) {
   if (snapshot.val()) {
@@ -187,20 +246,7 @@ connectedRef.on("value", function(snapshot) {
   }
 });
 
-connectionsRef.on("value", function(snapshot) {
-  $("#test").text(snapshot.numChildren());
-/*  if (snapshot.numChildren() > 2) {
-  	$('.rules-and-form').hide();
-  	alert('Unable to join');
-  }*/
-});
 
-// whenever someone enters the room
-connectionsRef.on('child_added', function () {
-	// 
-})
-
-// if the number of connections is more than 2, send user alert that they can't join, but offer spectator mode
 
 
 
