@@ -124,7 +124,10 @@ $('#submit-btn').click(function (event) {
 	// prevents page refresh/form submission
 	event.preventDefault();
 
-	if (!p1.data.name && !p2.data.name) {
+	var p1NoName = (p1.data.name === initialName);
+	var p2NoName = (p2.data.name === initialName);
+
+	if (p1NoName && p2NoName) {
 		p1.data.name = $('#username').val();
 		$('#p1-name').text(p1.data.name);
 		$('#p1-gamephase').text('Waiting for player 2...');
@@ -142,9 +145,11 @@ $('#submit-btn').click(function (event) {
 			losses: p1.data.losses
 		});*/
 
+		startGame();
+
 	}
 
-	else if (p1.data.name && !p2.data.name) {
+	else if (!p1NoName && p2NoName) {
 		p2.data.name = $('#username').val();
 		$('#p2-name').text(p2.data.name);
 		$('#player2').show();
@@ -160,21 +165,34 @@ $('#submit-btn').click(function (event) {
 			wins: p2.data.wins,
 			losses: p2.data.losses
 		});*/
+
+		startGame();
 	}
 	
-	startGame();
 })
 
 player1Ref.on('value', function (snapshot) {
+	console.log(snapshot.val());
+
 	p1.data.name = snapshot.val().name;
 	p1.data.wins = snapshot.val().wins;
 	p1.data.losses = snapshot.val().losses;
+
+	snapshot.val().name = p1.data.name;
+	snapshot.val().wins = p1.data.wins;
+	snapshot.val().losses = p1.data.losses;
 })
 
 player2Ref.on('value', function (snapshot) {
+	console.log(snapshot.val());
+
 	p2.data.name = snapshot.val().name;
 	p2.data.wins = snapshot.val().wins;
 	p2.data.losses = snapshot.val().losses;
+
+	snapshot.val().name = p2.data.name;
+	snapshot.val().wins = p2.data.wins;
+	snapshot.val().losses = p2.data.losses;
 })
 
 
@@ -186,9 +204,9 @@ function renderButtons (player) {
 		var btn = $('<button>');
 		btn.addClass('rps-choices').attr('data-value', choices[i]).text(choices[i]);
 		btnDiv.append(btn);
+		console.log(btn);
 	}
 	
-	// hide on initial page load
 	$(player).append(btnDiv);
 }
 
@@ -200,7 +218,15 @@ function startGame () {
 	if (playersPresent && !p1.turn) {
 		p1.turn = true;
 		renderButtons('#player1');
-		$('#p2-gamephase').text('Your opponent is choosing...')
+		$('#p2-gamephase').text('Your opponent is choosing...');
+	}
+	else if (playersPresent && p1.turn && !p2.turn) {
+		p2.turn = true;
+		renderButtons('#player2');
+		$('#p1-gamephase').text('Your opponent is choosing...');
+	}
+	else if (playersPresent && p1.turn && p2.turn) {
+		result(p1.choice, p2.choice);
 	}
 
 }
@@ -209,9 +235,17 @@ function startGame () {
 	// grab value and set it to that player's choice
 $('.rps-choices').click(function () {
 	// if it's player1's turn
-	p1.choice = $(this).attr('data-value');
+	if (p1.turn && !p2.turn) {
+		p1.choice = $(this).attr('data-value');
+		$('#player1').remove($('.rps-choices'));
+		startGame();
+	}
 	// if player2's turn
-	p2.choice = $(this).attr('data-value');
+	else if (p1.turn && p2.turn) {
+		p2.choice = $(this).attr('data-value');
+		$('#player2').remove($('.rps-choices'));
+		startGame();
+	}
 })
 
 // --------------FIREBASE--------------
